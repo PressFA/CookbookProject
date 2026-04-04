@@ -1,6 +1,10 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: cookingbook
   config:
     import:
       - classpath:db.yaml
+      - classpath:token.yaml
+      - classpath:public-urls.properties
