@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: cookingbook
+  config:
+    import:
+      - classpath:db.yaml
