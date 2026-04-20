@@ -34,12 +34,14 @@ public class FavoriteService {
 
         if (request.isFavorite()) {
             user.getFavoriteRecipes().add(recipe);
+            recipe.getFavoriteByUsers().add(user);
             log.info("Рецепт с id={} успешно добавлен в избранное пользователю с id={}",
                     recipe.getId(), user.getId());
             userRepository.save(user);
             return HttpStatus.CREATED;
         } else {
             user.getFavoriteRecipes().remove(recipe);
+            recipe.getFavoriteByUsers().remove(user);
             log.info("Рецепт с id={} успешно удален из избранного пользователя с id={}",
                     recipe.getId(), user.getId());
             userRepository.save(user);
