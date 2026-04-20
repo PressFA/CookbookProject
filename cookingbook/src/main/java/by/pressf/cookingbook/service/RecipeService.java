@@ -185,6 +185,9 @@ public class RecipeService {
             throw new AppError(HttpStatus.FORBIDDEN, "Пользователь не является автором данного рецепта");
         }
 
+        // Перебираем всех пользователей, у которых в избранном данный рецепт и удаляем его
+        recipe.getFavoriteByUsers().forEach(user -> user.getFavoriteRecipes().remove(recipe));
+
         recipeRepository.delete(recipe);
     }
 
