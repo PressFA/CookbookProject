@@ -1,63 +1,154 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Кулинарная книга · Главная</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
+
 <body>
   <div class="container">
-    <header class="header">
-      <div class="logo">
-        <h1>CookBook</h1>
-        <p>Рецепты со всего света</p>
-      </div>
-      <div id="auth-header">
-        <div id="guest-header" class="auth-buttons">
-          <button class="btn btn-outline" id="login-btn-header">Войти</button>
-          <button class="btn btn-primary" id="register-btn-header">Регистрация</button>
+    <div id="main-view">
+      <header class="header">
+        <div class="logo">
+          <h1>CookBook</h1>
+          <p>Рецепты со всего света</p>
         </div>
-        <div id="user-header" class="user-info" style="display: none;">
-          <span class="user-greeting">Привет, <span id="username-display"></span>!</span>
-          <button class="btn btn-outline" id="profile-btn">Профиль</button>
-          <button class="btn" id="logout-btn">Выйти</button>
+        <div id="auth-header">
+          <div id="guest-header" class="auth-buttons">
+            <button class="btn btn-outline" id="login-btn-header">Войти</button>
+            <button class="btn btn-primary" id="register-btn-header">Регистрация</button>
+          </div>
+          <div id="user-header" class="user-info" style="display: none;">
+            <span class="user-greeting">Привет, <span id="username-display"></span>!</span>
+            <button class="btn btn-outline" id="profile-btn">Профиль</button>
+            <button class="btn" id="logout-btn">Выйти</button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <div class="controls">
-      <div class="search-box">
-        <label for="search-input">Поиск по названию</label>
-        <input type="text" id="search-input" placeholder="Борщ, оладьи, паста..." maxlength="48">
+      <div class="controls">
+        <div class="search-box">
+          <label for="search-input">Поиск по названию</label>
+          <input type="text" id="search-input" placeholder="Борщ, оладьи, паста..." maxlength="48">
+        </div>
+        <div class="filter-box">
+          <label for="category-select">Категория</label>
+          <select id="category-select">
+            <option value="">Все категории</option>
+          </select>
+        </div>
+        <div class="sort-box">
+          <label for="sort-select">Сортировка</label>
+          <select id="sort-select">
+            <option value="recipeName,asc">По названию (А-Я)</option>
+            <option value="recipeName,desc">По названию (Я-А)</option>
+            <option value="time,asc">Время (по возрастанию)</option>
+            <option value="time,desc">Время (по убыванию)</option>
+          </select>
+        </div>
+        <button class="apply-btn" id="apply-filters-btn">Применить</button>
       </div>
-      <div class="filter-box">
-        <label for="category-select">Категория</label>
-        <select id="category-select">
-          <option value="">Все категории</option>
-        </select>
+
+      <div id="recipes-container">
+        <div class="info-message" id="loading-placeholder">
+          <div class="spinner"></div>
+          <p>Загружаем рецепты...</p>
+        </div>
       </div>
-      <div class="sort-box">
-        <label for="sort-select">Сортировка</label>
-        <select id="sort-select">
-          <option value="recipeName,asc">По названию (А-Я)</option>
-          <option value="recipeName,desc">По названию (Я-А)</option>
-          <option value="time,asc">Время (по возрастанию)</option>
-          <option value="time,desc">Время (по убыванию)</option>
-        </select>
+
+      <div class="load-more-container">
+        <button class="load-more-btn" id="load-more-btn" style="display: none;">Загрузить ещё</button>
       </div>
-      <button class="apply-btn" id="apply-filters-btn">Применить</button>
     </div>
 
-    <div id="recipes-container">
-      <div class="info-message" id="loading-placeholder">
+    <div id="profile-view" class="profile-view" style="display:none;">
+
+      <button class="btn btn-outline" onclick="window.location.hash='home'" style="margin-bottom: 20px; width: 100%;">
+        ← В главное меню
+      </button>
+
+
+      <div class="user-info-card">
+        <div class="user-avatar"></div>
+        <div class="user-details">
+          <h2 id="profile-user-name">Имя пользователя</h2>
+          <p class="user-role" id="profile-user-role">Роль: USER</p>
+          <div class="user-stats">
+            <div class="stat-item">
+              <span class="stat-value" id="profile-recipes-count">0</span>
+              <span class="stat-label">рецептов</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="profile-favorites-count">0</span>
+              <span class="stat-label">в избранном</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-header">
+        <h2>Личный кабинет</h2>
+        <button class="btn btn-primary" id="add-recipe-btn">+ Добавить рецепт</button>
+      </div>
+
+      <div class="profile-tabs">
+        <label class="tab-label">
+          <input type="radio" name="profile-list" value="my" checked>
+          Мои рецепты
+        </label>
+        <label class="tab-label">
+          <input type="radio" name="profile-list" value="fav">
+          Избранные рецепты
+        </label>
+      </div>
+
+      <div id="profile-list-container">
+      </div>
+    </div>
+
+    <div id="recipe-view" class="recipe-detail-view" style="display:none;">
+      <button class="btn btn-outline" onclick="window.history.back()" style="margin-bottom: 20px;">
+        ← Назад
+      </button>
+
+      <div id="recipe-detail-content">
         <div class="spinner"></div>
-        <p>Загружаем рецепты...</p>
       </div>
     </div>
 
-    <div class="load-more-container">
-      <button class="load-more-btn" id="load-more-btn" style="display: none;">Загрузить ещё</button>
+    <div id="login-view" class="auth-view" style="display:none;">
+      <h2>Вход в аккаунт</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Пароль" required>
+        <button type="submit" class="btn btn-primary">Войти</button>
+        <p class="error-msg" id="login-error"></p>
+        <p>Нет аккаунта? <a href="#register">Зарегистрироваться</a></p>
+        <button type="button" class="btn btn-outline" onclick="window.location.hash='home'"
+          style="margin-top: 10px; width: 100%;">
+          ← Назад на главную
+        </button>
+      </form>
+    </div>
+
+    <div id="register-view" class="auth-view" style="display:none;">
+      <h2>Создать аккаунт</h2>
+      <form id="register-form">
+        <input type="text" id="reg-name" placeholder="Имя (3-12 символов)" required maxlength="12">
+        <input type="email" id="reg-email" placeholder="Email" required>
+        <input type="password" id="reg-password" placeholder="Пароль (8-16 символов)" required minlength="8"
+          maxlength="16">
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        <p class="error-msg" id="reg-error"></p>
+        <p>Есть аккаунт? <a href="#login">Войти</a></p>
+        <button type="button" class="btn btn-outline" onclick="window.location.hash='home'"
+          style="margin-top: 10px; width: 100%;">
+          ← Назад на главную
+        </button>
+      </form>
     </div>
   </div>
 
@@ -73,4 +164,5 @@
 
   <script src="../js/main.js"></script>
 </body>
+
 </html>
