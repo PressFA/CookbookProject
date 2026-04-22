@@ -99,7 +99,7 @@ public class RecipeService {
 
         // Выполняем поиск и мапим в DTO
         return recipeRepository.findAll(spec, pageable)
-                .map(r -> new CardRecipeResponse(r.getId(), r.getRecipeName(), r.getImage(), r.getTime()));
+                .map(r -> new CardRecipeResponse(r.getId(), r.getImage(), r.getRecipeName(), r.getTime()));
     }
 
     @Transactional
@@ -198,6 +198,9 @@ public class RecipeService {
                     log.error("Ошибка (deleteModerRecipe): Рецепт с id={} не найден", recipeId);
                     return new AppError(HttpStatus.NOT_FOUND, "Рецепт не найден");
                 });
+
+        recipe.getFavoriteByUsers().forEach(user -> user.getFavoriteRecipes().remove(recipe));
+
         recipeRepository.delete(recipe);
     }
 
