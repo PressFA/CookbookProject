@@ -299,6 +299,7 @@ body {
   }
 }
 
+
 .auth-view {
   max-width: 420px;
   margin: 60px auto;
@@ -343,6 +344,7 @@ body {
 .auth-view a:hover {
   text-decoration: underline;
 }
+
 
 .profile-view {
   max-width: 900px;
@@ -390,6 +392,7 @@ body {
 .tab-label input[type="radio"] {
   display: none;
 }
+
 .tab-label:has(input:checked) {
   background: white;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -438,6 +441,8 @@ body {
 .btn-danger:hover {
   background: #ffcdd2;
 }
+
+
 
 .user-info-card {
   display: flex;
@@ -497,6 +502,8 @@ body {
   font-size: 1.3rem;
   color: #2e241f;
 }
+
+
 
 .recipe-detail-view {
   max-width: 900px;
