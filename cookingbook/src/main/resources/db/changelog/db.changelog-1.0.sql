@@ -56,3 +56,15 @@ CREATE TABLE favorites (
     CONSTRAINT fk_fav_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_fav_recipe FOREIGN KEY (recipe_id) REFERENCES recipes(id)
 );
+
+--changeset pressf:6
+CREATE TABLE ingredients (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    recipe_id BIGINT NOT NULL,
+    name VARCHAR(24) NOT NULL,
+    quantity INT NOT NULL,
+    measure_unit VARCHAR(10) NOT NULL,
+
+    CONSTRAINT fk_ingr_recipe FOREIGN KEY (recipe_id) REFERENCES recipes(id),
+    CHECK (measure_unit IN ('GRAM', 'MILLILITER', 'PIECE'))
+)

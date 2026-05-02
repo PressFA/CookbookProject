@@ -1,5 +1,7 @@
 package by.pressf.cookingbook.dto.request.recipe;
 
+import by.pressf.cookingbook.dto.internal.InfoIngredient;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -27,5 +29,8 @@ public record UpdateRecipeRequest(
         String description,
         @NotEmpty(message = "Список категорий не может быть пустым")
         @Size(min = 1, max = 2, message = "Количество категорий должно быть от 1 до 2")
-        List<Long> categories) {
+        List<Long> categories,
+        @NotEmpty(message = "Список ингредиентов не может быть пустым!")
+        @Valid
+        List<InfoIngredient> ingredients) {
 }

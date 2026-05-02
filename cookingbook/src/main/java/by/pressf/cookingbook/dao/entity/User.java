@@ -32,7 +32,7 @@ public class User {
     private Status status;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Recipe> recipes;
-    @ManyToMany // Таблица избранное
+    @ManyToMany // Таблица избранные рецепты (со стороны пользователя)
     @JoinTable(
             name = "favorites",
             joinColumns = @JoinColumn(name = "user_id"),

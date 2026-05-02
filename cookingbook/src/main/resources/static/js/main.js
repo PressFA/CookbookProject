@@ -257,6 +257,7 @@ window.addEventListener('hashchange', () => {
     document.getElementById('register-view').style.display = 'none';
     document.getElementById('profile-view').style.display = 'none';
     document.getElementById('recipe-view').style.display = 'none';
+    document.getElementById('recipe-form-view').style.display = 'none';
 
     if (hash === '#profile') {
         if (!isLoggedIn()) {
@@ -268,6 +269,20 @@ window.addEventListener('hashchange', () => {
     } else if (hash.startsWith('#recipe/')) {
         const recipeId = hash.split('/')[1];
         loadRecipeDetail(recipeId);
+    } else if (hash === '#create-recipe') {
+        if (!isLoggedIn()) {
+            window.location.hash = 'login';
+        } else {
+            document.getElementById('recipe-form-view').style.display = 'block';
+        }
+    } else if (hash.startsWith('#edit-recipe/')) {
+        if (!isLoggedIn()) {
+            window.location.hash = 'login';
+        } else {
+            const recipeId = hash.split('/')[1];
+            document.getElementById('recipe-form-view').style.display = 'block';
+            openEditRecipeForm(recipeId);
+        }
     } else if (hash === '#login') {
         document.getElementById('login-view').style.display = 'block';
     } else if (hash === '#register') {
@@ -406,7 +421,6 @@ function renderProfileList(recipes, type) {
 
         const cats = recipe.categories ? recipe.categories.join(', ') : '';
 
-        // Кнопки действий (показываем только в "Мои рецепты")
         let actionsHTML = '';
         if (type === 'my') {
             actionsHTML = `
@@ -420,7 +434,7 @@ function renderProfileList(recipes, type) {
         item.innerHTML = `
       <div class="profile-item-info">
         <span class="recipe-name">${recipe.recipeName}</span>
-        <span class="recipe-meta">⏱ ${recipe.time} мин | 🏷 ${cats}</span>
+        <span class="recipe-meta">${recipe.time} мин | ${cats}</span>
       </div>
       ${actionsHTML}
     `;
@@ -486,6 +500,135 @@ async function loadRecipeDetail(recipeId) {
     }
 }
 
+const recipeFormView = document.getElementById('recipe-form-view');
+const recipeForm = document.getElementById('recipe-form');
+const formTitle = document.getElementById('form-title');
+let editingRecipeId = null;
+
+async function loadCategoriesForForm() {
+    const categoriesContainer = document.getElementById('form-categories');
+    categoriesContainer.innerHTML = '<div class="spinner" style="width: 20px; height: 20px;"></div>';
+
+    try {
+        const categories = await apiRequest('/category');
+        categoriesContainer.innerHTML = '';
+
+        categories.forEach(cat => {
+            const label = document.createElement('label');
+            label.className = 'category-checkbox';
+            label.innerHTML = `
+        <input type="checkbox" name="category" value="${cat.id}">
+        <span>${cat.categoryName}</span>
+      `;
+            categoriesContainer.appendChild(label);
+        });
+    } catch (err) {
+        console.error('Ошибка загрузки категорий:', err);
+        categoriesContainer.innerHTML = '<span style="color: #d32f2f">Не удалось загрузить категории</span>';
+    }
+}
+
+function openCreateRecipeForm() {
+    editingRecipeId = null;
+    formTitle.textContent = 'Добавить новый рецепт';
+    recipeForm.reset();
+    document.getElementById('form-general-error').textContent = '';
+    loadCategoriesForForm();
+    window.location.hash = 'create-recipe';
+}
+
+async function openEditRecipeForm(recipeId) {
+    editingRecipeId = recipeId;
+    formTitle.textContent = 'Редактировать рецепт';
+
+    try {
+        const recipe = await apiRequest(`/recipe/${recipeId}`);
+
+        document.getElementById('form-recipe-name').value = recipe.recipeName;
+        document.getElementById('form-time').value = recipe.time;
+        document.getElementById('form-calories').value = recipe.calories;
+        document.getElementById('form-proteins').value = recipe.proteins;
+        document.getElementById('form-fats').value = recipe.fats;
+        document.getElementById('form-carbs').value = recipe.carbs;
+        document.getElementById('form-image').value = recipe.image;
+        document.getElementById('form-description').value = recipe.description;
+
+        await loadCategoriesForForm();
+
+    } catch (err) {
+        console.error('Ошибка загрузки рецепта:', err);
+        alert('Не удалось загрузить рецепт для редактирования');
+    }
+}
+
+recipeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+
+    const selectedCategories = Array.from(
+        document.querySelectorAll('input[name="category"]:checked')
+    ).map(cb => parseInt(cb.value));
+
+    if (selectedCategories.length < 1 || selectedCategories.length > 2) {
+        document.getElementById('error-categories').textContent =
+            'Выберите 1 или 2 категории';
+        return;
+    }
+
+    const imageData = imageBase64Input ? imageBase64Input.value : '';
+
+    if (!imageData) {
+        alert('Пожалуйста, выберите изображение');
+        return;
+    }
+
+    const recipeData = {
+        recipeName: document.getElementById('form-recipe-name').value.trim(),
+        time: parseInt(document.getElementById('form-time').value),
+        calories: parseInt(document.getElementById('form-calories').value),
+        proteins: parseInt(document.getElementById('form-proteins').value),
+        fats: parseInt(document.getElementById('form-fats').value),
+        carbs: parseInt(document.getElementById('form-carbs').value),
+        image: imageData,
+        description: document.getElementById('form-description').value.trim(),
+        categories: selectedCategories
+    };
+
+    if (editingRecipeId) {
+        recipeData.recipeId = editingRecipeId;
+    }
+
+    try {
+        const submitBtn = document.getElementById('form-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Сохранение...';
+
+        if (editingRecipeId) {
+            await apiRequest('/recipe', 'PUT', recipeData);
+            alert('Рецепт успешно обновлён!');
+        } else {
+            await apiRequest('/recipe', 'POST', recipeData);
+            alert('Рецепт успешно создан!');
+        }
+
+        window.location.hash = 'profile';
+
+    } catch (err) {
+        console.error('Ошибка сохранения рецепта:', err);
+        document.getElementById('form-general-error').textContent =
+            err.message || 'Не удалось сохранить рецепт';
+    } finally {
+        const submitBtn = document.getElementById('form-submit-btn');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Сохранить рецепт';
+    }
+});
+
+document.getElementById('add-recipe-btn').addEventListener('click', openCreateRecipeForm);
+
+window.openEditRecipe = openEditRecipeForm;
+
 function renderRecipeDetail(recipe) {
     const isFavorite = isLoggedIn() ? checkIfFavorite(recipe.recipeId) : false;
 
@@ -502,16 +645,13 @@ function renderRecipeDetail(recipe) {
     
     <div class="recipe-meta-info">
       <div class="meta-item">
-        <span></span>
         <span>${recipe.time} мин</span>
       </div>
       <div class="meta-item">
-        <span></span>
         <span>Создан: ${new Date(recipe.createdAt).toLocaleDateString('ru-RU')}</span>
       </div>
       ${recipe.updatedAt ? `
       <div class="meta-item">
-        <span></span>
         <span>Обновлён: ${new Date(recipe.updatedAt).toLocaleDateString('ru-RU')}</span>
       </div>
       ` : ''}
@@ -585,143 +725,48 @@ function renderRecipeDetail(recipe) {
 function checkIfFavorite(recipeId) {
     return false;
 }
-    } catch (err) {
-        console.error(err);
-    }
-};
 
+const imageFileInput = document.getElementById('form-image-file');
+const imagePreviewContainer = document.getElementById('image-preview-container');
+const imagePreview = document.getElementById('image-preview');
+const imageBase64Input = document.getElementById('form-image-base64');
 
+if (imageFileInput) {
+    imageFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-
-// ==================== ДЕТАЛЬНАЯ СТРАНИЦА РЕЦЕПТА ====================
-const recipeView = document.getElementById('recipe-view');
-const recipeDetailContent = document.getElementById('recipe-detail-content');
-
-async function loadRecipeDetail(recipeId) {
-    recipeDetailContent.innerHTML = '<div class="spinner"></div>';
-    recipeView.style.display = 'block';
-
-    try {
-        const recipe = await apiRequest(`/recipe/${recipeId}`);
-        if (!recipe) {
-            recipeDetailContent.innerHTML = '<div class="info-message">Рецепт не найден</div>';
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение (JPG, PNG, GIF)');
+            imageFileInput.value = '';
             return;
         }
 
-        renderRecipeDetail(recipe);
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Размер изображения не должен превышать 5MB');
+            imageFileInput.value = '';
+            return;
+        }
 
-    } catch (err) {
-        console.error('Ошибка загрузки рецепта:', err);
-        recipeDetailContent.innerHTML = '<div class="info-message">Ошибка загрузки рецепта</div>';
-    }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64String = event.target.result;
+            imageBase64Input.value = base64String;
+
+            imagePreview.src = base64String;
+            imagePreviewContainer.style.display = 'block';
+        };
+        reader.onerror = () => {
+            alert('Ошибка при чтении файла');
+            imageFileInput.value = '';
+        };
+        reader.readAsDataURL(file);
+    });
 }
 
-function renderRecipeDetail(recipe) {
-    // Проверяем, в избранном ли рецепт (только для авторизованных)
-    const isFavorite = isLoggedIn() ? checkIfFavorite(recipe.recipeId) : false;
-
-    const categoriesHTML = recipe.categories
-        ? recipe.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('')
-        : '';
-
-    recipeDetailContent.innerHTML = `
-    <img src="${recipe.image}" alt="${recipe.recipeName}" class="recipe-detail-image">
-    
-    <div class="recipe-detail-header">
-      <h1>${recipe.recipeName}</h1>
-    </div>
-    
-    <div class="recipe-meta-info">
-      <div class="meta-item">
-        <span>⏱</span>
-        <span>${recipe.time} мин</span>
-      </div>
-      <div class="meta-item">
-        <span>📅</span>
-        <span>Создан: ${new Date(recipe.createdAt).toLocaleDateString('ru-RU')}</span>
-      </div>
-      ${recipe.updatedAt ? `
-      <div class="meta-item">
-        <span>✏</span>
-        <span>Обновлён: ${new Date(recipe.updatedAt).toLocaleDateString('ru-RU')}</span>
-      </div>
-      ` : ''}
-    </div>
-    
-    <p class="recipe-author">👨‍🍳 Автор: ${recipe.name}</p>
-    
-    <div class="recipe-categories">
-      ${categoriesHTML}
-    </div>
-    
-    <div class="nutrition-info">
-      <h3>📊 Пищевая ценность</h3>
-      <div class="nutrition-grid">
-        <div class="nutrition-item">
-          <div class="nutrition-value">${recipe.calories}</div>
-          <div class="nutrition-label">ккал</div>
-        </div>
-        <div class="nutrition-item">
-          <div class="nutrition-value">${recipe.proteins}г</div>
-          <div class="nutrition-label">белки</div>
-        </div>
-        <div class="nutrition-item">
-          <div class="nutrition-value">${recipe.fats}г</div>
-          <div class="nutrition-label">жиры</div>
-        </div>
-        <div class="nutrition-item">
-          <div class="nutrition-value">${recipe.carbs}г</div>
-          <div class="nutrition-label">углеводы</div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="recipe-description">
-      ${recipe.description}
-    </div>
-    
-    ${isLoggedIn() ? `
-    <div class="favorite-checkbox">
-      <input type="checkbox" id="favorite-checkbox" ${isFavorite ? 'checked' : ''}>
-      <label for="favorite-checkbox">⭐ Добавить в избранное</label>
-    </div>
-    ` : '<p style="color: #888; margin-top: 20px;">🔒 Чтобы добавить в избранное, войдите в аккаунт</p>'}
-  `;
-
-    // Добавляем обработчик чекбокса избранного
-    // Добавляем обработчик чекбокса избранного
-    // Добавляем обработчик чекбокса избранного
-    if (isLoggedIn()) {
-        const checkbox = document.getElementById('favorite-checkbox');
-        checkbox.addEventListener('change', async (e) => {
-            const isAdding = e.target.checked;
-
-            try {
-                const response = await apiRequest('/favorite', 'POST', {
-                    recipeId: recipe.recipeId,
-                    isFavorite: isAdding
-                });
-
-                // response будет null при 204 (удаление) или объект при 201 (добавление)
-                if (response === null) {
-                    // Удалено из избранного
-                    alert('Рецепт удалён из избранного');
-                } else {
-                    // Добавлено в избранное
-                    alert('Рецепт добавлен в избранное!');
-                }
-            } catch (err) {
-                console.error('Ошибка изменения избранного:', err);
-                alert('Ошибка при изменении избранного: ' + err.message);
-                // Возвращаем прежнее состояние чекбокса
-                checkbox.checked = !checkbox.checked;
-            }
-        });
-    }
-}
-
-// Временное хранение избранных (пока нет API для проверки статуса)
-function checkIfFavorite(recipeId) {
-    // Пока заглушка - в будущем можно хранить в localStorage или проверять через API
-    return false;
+function clearImagePreview() {
+    if (imageFileInput) imageFileInput.value = '';
+    if (imageBase64Input) imageBase64Input.value = '';
+    if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+    if (imagePreview) imagePreview.src = '';
 }

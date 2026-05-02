@@ -5,15 +5,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Кулинарная книга · Главная</title>
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <div class="container">
+    
     <div id="main-view">
       <header class="header">
         <div class="logo">
-          <h1>CookBook</h1>
+  <h1>CookBook</h1>
           <p>Рецепты со всего света</p>
         </div>
         <div id="auth-header">
@@ -64,6 +65,7 @@
       </div>
     </div>
 
+    
     <div id="profile-view" class="profile-view" style="display:none;">
 
       <button class="btn btn-outline" onclick="window.location.hash='home'" style="margin-bottom: 20px; width: 100%;">
@@ -72,7 +74,7 @@
 
 
       <div class="user-info-card">
-        <div class="user-avatar"></div>
+        <div class="user-avatar">User</div>
         <div class="user-details">
           <h2 id="profile-user-name">Имя пользователя</h2>
           <p class="user-role" id="profile-user-role">Роль: USER</p>
@@ -94,6 +96,7 @@
         <button class="btn btn-primary" id="add-recipe-btn">+ Добавить рецепт</button>
       </div>
 
+      <!-- Переключатели (Радиокнопки) -->
       <div class="profile-tabs">
         <label class="tab-label">
           <input type="radio" name="profile-list" value="my" checked>
@@ -105,10 +108,13 @@
         </label>
       </div>
 
+      <!-- Список рецептов (текстовый) -->
       <div id="profile-list-container">
+        <!-- Сюда JS будет добавлять рецепты -->
       </div>
     </div>
 
+    
     <div id="recipe-view" class="recipe-detail-view" style="display:none;">
       <button class="btn btn-outline" onclick="window.history.back()" style="margin-bottom: 20px;">
         ← Назад
@@ -119,6 +125,87 @@
       </div>
     </div>
 
+    
+    <div id="recipe-form-view" class="recipe-form-view" style="display:none;">
+      <button class="btn btn-outline" onclick="window.location.hash='profile'" style="margin-bottom: 20px;">
+        ← Назад в профиль
+      </button>
+
+      <h2 id="form-title">Добавить новый рецепт</h2>
+
+      <form id="recipe-form" class="recipe-form">
+        <div class="form-group">
+          <label for="form-recipe-name">Название рецепта *</label>
+          <input type="text" id="form-recipe-name" required maxlength="48" minlength="4">
+          <span class="form-error" id="error-recipe-name"></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="form-time">Время приготовления (мин) *</label>
+            <input type="number" id="form-time" required min="1">
+          </div>
+
+          <div class="form-group">
+            <label>Категории * (1-2)</label>
+            <div id="form-categories">
+              <!-- Чекбоксы категорий загрузятся через JS -->
+            </div>
+            <span class="form-error" id="error-categories"></span>
+          </div>
+        </div>
+
+        <div class="form-section">
+        <h3>Пищевая ценность (на 100г)</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="form-calories">Калории (ккал) *</label>
+              <input type="number" id="form-calories" required min="1">
+            </div>
+            <div class="form-group">
+              <label for="form-proteins">Белки (г) *</label>
+              <input type="number" id="form-proteins" required min="1">
+            </div>
+            <div class="form-group">
+              <label for="form-fats">Жиры (г) *</label>
+              <input type="number" id="form-fats" required min="1">
+            </div>
+            <div class="form-group">
+              <label for="form-carbs">Углеводы (г) *</label>
+              <input type="number" id="form-carbs" required min="1">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="form-image-file">Изображение рецепта *</label>
+          <input type="file" id="form-image-file" accept="image/*" required>
+          <small style="color: #888; display: block; margin-top: 5px;">
+            Выберите изображение (JPG, PNG, GIF)
+          </small>
+          <div id="image-preview-container" style="margin-top: 10px; display: none;">
+            <img id="image-preview" style="max-width: 200px; border-radius: 8px; border: 2px solid #e9ddd3;">
+          </div>
+        </div>
+        <!-- Скрытое поле для хранения base64 -->
+        <input type="hidden" id="form-image-base64">
+
+        <div class="form-group">
+          <label for="form-description">Описание рецепта *</label>
+          <textarea id="form-description" required rows="6"
+            placeholder="Опишите ингредиенты и шаги приготовления..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="window.location.hash='profile'">Отмена</button>
+          <button type="submit" class="btn btn-primary" id="form-submit-btn">Сохранить рецепт</button>
+        </div>
+
+        <div class="form-error" id="form-general-error"></div>
+      </form>
+    </div>
+
+    
     <div id="login-view" class="auth-view" style="display:none;">
       <h2>Вход в аккаунт</h2>
       <form id="login-form">
@@ -134,6 +221,7 @@
       </form>
     </div>
 
+    
     <div id="register-view" class="auth-view" style="display:none;">
       <h2>Создать аккаунт</h2>
       <form id="register-form">
@@ -152,6 +240,7 @@
     </div>
   </div>
 
+    
   <template id="recipe-card-template">
     <div class="recipe-card" data-recipe-id="">
       <img class="recipe-card__image" src="" alt="" loading="lazy">
@@ -162,7 +251,7 @@
     </div>
   </template>
 
-  <script src="../js/main.js"></script>
+  <script src="main.js"></script>
 </body>
 
 </html>

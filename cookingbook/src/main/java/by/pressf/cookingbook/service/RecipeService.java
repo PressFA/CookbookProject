@@ -1,11 +1,13 @@
 package by.pressf.cookingbook.service;
 
 import by.pressf.cookingbook.dao.entity.Category;
+import by.pressf.cookingbook.dao.entity.Ingredient;
 import by.pressf.cookingbook.dao.entity.Recipe;
 import by.pressf.cookingbook.dao.entity.User;
 import by.pressf.cookingbook.dao.repository.CategoryRepository;
 import by.pressf.cookingbook.dao.repository.RecipeRepository;
 import by.pressf.cookingbook.dao.repository.UserRepository;
+import by.pressf.cookingbook.dto.internal.InfoIngredient;
 import by.pressf.cookingbook.dto.internal.RecipeCategoryRow;
 import by.pressf.cookingbook.dto.internal.UserRecipe;
 import by.pressf.cookingbook.dto.request.recipe.CreateRecipeRequest;
@@ -27,6 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -37,6 +42,9 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public List<UserRecipe> getAllMyRecipes(Long userId) {
@@ -53,9 +61,11 @@ public class RecipeService {
     @Transactional(readOnly = true)
     public RecipeResponse getRecipeById(Long recipeId) {
         RecipeResponse resp = recipeRepository.getRecipeResponseById(recipeId);
-        List<String> categories = recipeRepository.getRecipeCategoryByRecipeId(recipeId);
 
-        return resp.setCategories(categories);
+        List<String> categories = recipeRepository.getRecipeCategoryByRecipeId(recipeId);
+        List<InfoIngredient> ingredients = recipeRepository.getRecipeIngredientsByRecipeId(recipeId);
+
+        return resp.setLists(categories, ingredients);
     }
 
     @Transactional(readOnly = true)
@@ -131,6 +141,17 @@ public class RecipeService {
                 .updatedAt(null)
                 .categories(new HashSet<>(categoryList))
                 .build();
+
+        recipeRequest.ingredients().forEach(infoIngredient -> {
+            Ingredient ingredient = Ingredient.builder()
+                    .recipe(recipe)
+                    .name(infoIngredient.name())
+                    .quantity(infoIngredient.quantity())
+                    .measureUnit(infoIngredient.measureUnit())
+                    .build();
+            recipe.getIngredients().add(ingredient);
+        });
+
         Recipe savedRecipe = recipeRepository.save(recipe);
 
         return Map.of("recipeId", savedRecipe.getId());
@@ -164,8 +185,40 @@ public class RecipeService {
                     recipeRequest.categories());
             throw new AppError(HttpStatus.NOT_FOUND, "Одна или несколько категорий не найдены");
         }
+//        recipe.getCategories().clear();
+//        recipe.getCategories().addAll(categoryList);
+//
+//        recipe.getIngredients().clear();
+////        ingredientRepository.deleteAll(recipe.getIngredients());
+////        recipe.getIngredients().clear();
+//
+//        recipeRequest.ingredients().forEach(infoIngredient -> {
+//            Ingredient ingredient = Ingredient.builder()
+//                    .recipe(recipe)
+//                    .name(infoIngredient.name())
+//                    .quantity(infoIngredient.quantity())
+//                    .measureUnit(infoIngredient.measureUnit())
+//                    .build();
+//            recipe.getIngredients().add(ingredient);
+//        });
+
         recipe.getCategories().clear();
         recipe.getCategories().addAll(categoryList);
+
+        // Удаляем старые ингредиенты явно через EntityManager
+        recipe.getIngredients().forEach(entityManager::remove);
+        recipe.getIngredients().clear();
+        entityManager.flush(); // принудительно применяем удаление, чтобы избежать конфликта CHECK
+
+        recipeRequest.ingredients().forEach(infoIngredient -> {
+            Ingredient ingredient = Ingredient.builder()
+                    .recipe(recipe)
+                    .name(infoIngredient.name())
+                    .quantity(infoIngredient.quantity())
+                    .measureUnit(infoIngredient.measureUnit())
+                    .build();
+            recipe.getIngredients().add(ingredient);
+        });
 
         recipeRepository.save(recipe);
 

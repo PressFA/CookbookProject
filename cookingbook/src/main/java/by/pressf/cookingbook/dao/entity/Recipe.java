@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Builder
@@ -40,15 +42,18 @@ public class Recipe {
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    @ManyToMany // Таблица, которая связывает категории и рецепты
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "recipe", fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default // Таблица ингредиентов
+    private List<Ingredient> ingredients = new ArrayList<>();
+    @ManyToMany
     @JoinTable(
             name = "recipe_category",
             joinColumns = @JoinColumn(name = "recipe_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    @Builder.Default
+    @Builder.Default // Таблица, которая связывает категории и рецепты
     private Set<Category> categories = new HashSet<>();
     @ManyToMany(mappedBy = "favoriteRecipes")
-    @Builder.Default
+    @Builder.Default // Таблица избранные рецепты (со стороны рецептов)
     private Set<User> favoriteByUsers = new HashSet<>();
 }
