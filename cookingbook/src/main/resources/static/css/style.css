@@ -1,4 +1,4 @@
- 
+/* ---------- ОБЩИЕ СТИЛИ ---------- */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -18,7 +18,7 @@ body {
   margin: 0 auto;
 }
 
- 
+/* ---------- ШАПКА ---------- */
 .header {
   display: flex;
   justify-content: space-between;
@@ -90,6 +90,7 @@ body {
   font-weight: 500;
 }
 
+/* ---------- ПАНЕЛЬ ФИЛЬТРОВ И ПОИСКА ---------- */
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -167,6 +168,7 @@ body {
   background-color: #9c4f23;
 }
 
+/* ---------- СЕТКА РЕЦЕПТОВ ---------- */
 #recipes-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -183,6 +185,7 @@ body {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  /* Убираем width: 100% если есть */
   max-width: 100%;
 }
 
@@ -223,10 +226,11 @@ body {
 }
 
 .recipe-card__time::before {
-  content: " ";
+  content: "⏱️";
   font-size: 1rem;
 }
 
+/* ---------- КНОПКА "ЗАГРУЗИТЬ ЕЩЁ" ---------- */
 .load-more-container {
   text-align: center;
   margin: 20px 0 40px;
@@ -255,6 +259,7 @@ body {
   color: #888;
 }
 
+/* ---------- СОСТОЯНИЯ (ПУСТО, ОШИБКА, ЗАГРУЗКА) ---------- */
 .info-message {
   text-align: center;
   padding: 40px;
@@ -279,7 +284,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
- 
+/* ---------- АДАПТИВНОСТЬ ---------- */
 @media (max-width: 600px) {
   .header {
     flex-direction: column;
@@ -303,7 +308,7 @@ body {
 }
 
 
- 
+/* ---------- ФОРМЫ ВХОДА / РЕГИСТРАЦИИ ---------- */
 .auth-view {
   max-width: 420px;
   margin: 60px auto;
@@ -350,7 +355,7 @@ body {
 }
 
 
- 
+/* ---------- ПРОФИЛЬ ---------- */
 .profile-view {
   max-width: 900px;
   margin: 40px auto;
@@ -372,6 +377,7 @@ body {
   font-size: 1.8rem;
 }
 
+/* Табы (Переключатели) */
 .profile-tabs {
   display: flex;
   gap: 20px;
@@ -394,15 +400,19 @@ body {
 .tab-label:hover {
   background: #eee;
 }
+/* Скрываем стандартный кружок радиокнопки */
 .tab-label input[type="radio"] {
   display: none;
 }
+/* Активная вкладка */
 .tab-label:has(input:checked) {
   background: white;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   color: #b45f2b;
 }
 
+/* ПРОФИЛЬ*/
+/* Список рецептов в профиле */
 .profile-item {
   display: flex;
   justify-content: space-between;
@@ -448,7 +458,7 @@ body {
 
 
 
- 
+/* ---------- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ ---------- */
 .user-info-card {
   display: flex;
   align-items: center;
@@ -511,7 +521,7 @@ body {
 
 
 
- 
+/* ---------- ДЕТАЛЬНАЯ СТРАНИЦА РЕЦЕПТА ---------- */
 .recipe-detail-view {
   max-width: 900px;
   margin: 40px auto;
@@ -641,7 +651,7 @@ body {
 
 
 
- 
+/* ---------- ФОРМА РЕЦЕПТА ---------- */
 .recipe-form-view {
   max-width: 800px;
   margin: 40px auto;
