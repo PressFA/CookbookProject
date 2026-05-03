@@ -67,6 +67,79 @@ const imagePreviewContainer = document.getElementById('image-preview-container')
 const imagePreview = document.getElementById('image-preview');
 const imageBase64Input = document.getElementById('form-image-base64');
 
+
+
+
+
+// ==== РАБОТА С ИНГРЕДИЕНТАМИ ====
+function createIngredientRow(data = { name: '', quantity: '', unit: 'GRAM' }) {
+    const row = document.createElement('div');
+    row.className = 'ingredient-row';
+    row.innerHTML = `
+    <input type="text" name="ing-name" placeholder="Название" maxlength="24" value="${escapeHtml(data.name)}" required>
+    <input type="number" name="ing-quantity" min="1" value="${data.quantity}" placeholder="Кол-во" required>
+    <select name="ing-unit">
+      <option value="GRAM" ${data.unit === 'GRAM' ? 'selected' : ''}>г</option>
+      <option value="MILLILITER" ${data.unit === 'MILLILITER' ? 'selected' : ''}>мл</option>
+      <option value="PIECE" ${data.unit === 'PIECE' ? 'selected' : ''}>шт</option>
+    </select>
+    <button type="button" class="remove-ingredient-btn" title="Удалить">✕</button>
+  `;
+
+    // Обработчик удаления
+    row.querySelector('.remove-ingredient-btn').addEventListener('click', () => {
+        row.remove();
+    });
+
+    return row;
+}
+
+function getIngredientsFromForm() {
+    const rows = document.querySelectorAll('#ingredients-container .ingredient-row');
+    const ingredients = [];
+    rows.forEach(row => {
+        const name = row.querySelector('input[name="ing-name"]').value.trim();
+        const quantity = parseInt(row.querySelector('input[name="ing-quantity"]').value);
+        const unit = row.querySelector('select[name="ing-unit"]').value;
+        if (name && quantity > 0) {
+            ingredients.push({ name, quantity, measureUnit: unit });
+        }
+    });
+    return ingredients;
+}
+
+function clearIngredientsContainer() {
+    document.getElementById('ingredients-container').innerHTML = '';
+}
+
+function fillIngredients(ingredientsList) {
+    clearIngredientsContainer();
+    const container = document.getElementById('ingredients-container');
+    if (ingredientsList && ingredientsList.length > 0) {
+        ingredientsList.forEach(ing => {
+            container.appendChild(createIngredientRow({
+                name: ing.name,
+                quantity: ing.quantity,
+                unit: ing.measureUnit
+            }));
+        });
+    } else {
+        // Добавляем одну пустую строку для начала
+        container.appendChild(createIngredientRow());
+    }
+}
+
+function getUnitLabel(unit) {
+    return unit === 'GRAM' ? 'г' : unit === 'MILLILITER' ? 'мл' : 'шт';
+}
+
+
+
+
+
+
+
+
 async function loadMainPage() {
     currentPage = 0;
     const data = await fetchRecipes(0);
@@ -378,6 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHelpContent('about');
         }
     }
+
+    document.getElementById('add-ingredient-btn').addEventListener('click', () => {
+        document.getElementById('ingredients-container').appendChild(createIngredientRow());
+    });
+
 });
 
 // ==================== СВАП ЭКРАНОВ ====================
@@ -677,6 +755,8 @@ function renderUsersTable(users) {
     `;
     container.innerHTML = html;
 }
+
+
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -1199,6 +1279,24 @@ function renderRecipeDetail(recipe) {
             ${recipe.description}
         </div>
         
+        ${(() => {
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+                const items = recipe.ingredients.map(ing =>
+                    `<div class="ingredient-detail-item">
+                        <span class="ing-name">${escapeHtml(ing.name)}</span>
+                        <span class="ing-amount">${ing.quantity} ${getUnitLabel(ing.measureUnit)}</span>
+                    </div>`
+                ).join('');
+                return `
+                    <div class="recipe-ingredients">
+                        <h3>Ингредиенты</h3>
+                        <div class="ingredients-list">${items}</div>
+                    </div>
+                `;
+            }
+            return '';
+        })()}
+        
         ${!isLoggedIn() ?
             '<p style="color: #888; margin-top: 20px;">Чтобы добавить в избранное, войдите в аккаунт</p>' :
             currentUserRole === 'ADMIN' ?
@@ -1320,6 +1418,10 @@ async function loadCategoriesForForm() {
         console.error('Ошибка загрузки категорий:', err);
         categoriesContainer.innerHTML = '<span style="color: #d32f2f">Не удалось загрузить категории</span>';
     }
+
+    // document.getElementById('add-ingredient-btn').addEventListener('click', () => {
+    //     document.getElementById('ingredients-container').appendChild(createIngredientRow());
+    // });
 }
 
 function validateCategoriesSelection() {
@@ -1357,6 +1459,7 @@ function openCreateRecipeForm() {
     }
 
     loadCategoriesForForm();
+    fillIngredients([]); // очистит и добавит одну пустую строку
     window.location.hash = 'create-recipe';
 }
 
@@ -1389,6 +1492,9 @@ async function openEditRecipeForm(recipeId) {
         }
 
         await loadCategoriesForForm();
+
+        // Заполняем ингредиенты
+        fillIngredients(recipe.ingredients || []);
 
         const recipeCategoryNames = recipe.categories || [];
         const allCheckboxes = document.querySelectorAll('#form-categories input[type="checkbox"]');
@@ -1449,7 +1555,8 @@ recipeForm.addEventListener('submit', async (e) => {
         fats: parseInt(document.getElementById('form-fats').value),
         carbs: parseInt(document.getElementById('form-carbs').value),
         description: document.getElementById('form-description').value.trim(),
-        categories: selectedCategories
+        categories: selectedCategories,
+        ingredients: getIngredientsFromForm()
     };
 
     // const recipeData = {

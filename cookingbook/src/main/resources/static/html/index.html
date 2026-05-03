@@ -208,6 +208,18 @@
         <!-- base64 hranenie -->
         <input type="hidden" id="form-image-base64">
 
+        <!-- Секция ингредиентов -->
+        <div class="form-section">
+          <h3>Ингредиенты *</h3>
+          <div id="ingredients-container">
+            <!-- js-динамические строки -->
+          </div>
+          <button type="button" id="add-ingredient-btn" class="btn btn-outline" style="margin-top: 10px;">
+            + Добавить ингредиент
+          </button>
+          <span class="form-error" id="error-ingredients"></span>
+        </div>
+
         <div class="form-group">
           <label for="form-description">Описание рецепта *</label>
           <textarea id="form-description" required rows="6"
