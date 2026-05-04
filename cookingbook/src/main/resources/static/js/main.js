@@ -1255,25 +1255,38 @@ function renderRecipeDetail(recipe) {
         
         <div class="nutrition-info">
             <h3>Пищевая ценность</h3>
-            <div class="nutrition-grid">
-                <div class="nutrition-item">
-                    <div class="nutrition-value">${recipe.calories}</div>
-                    <div class="nutrition-label">ккал</div>
+            <div class="nutrition-interactive">
+                <div class="nutrition-diagram">
+                    <div class="pie-chart" id="nutrition-pie"></div>
+                    <div class="nutrition-legend">
+                        <div class="legend-item"><span class="legend-color" style="background:#e74c3c;"></span> Белки <span id="legend-proteins">${recipe.proteins}г</span></div>
+                        <div class="legend-item"><span class="legend-color" style="background:#f1c40f;"></span> Жиры <span id="legend-fats">${recipe.fats}г</span></div>
+                        <div class="legend-item"><span class="legend-color" style="background:#2ecc71;"></span> Углеводы <span id="legend-carbs">${recipe.carbs}г</span></div>
+                    </div>
                 </div>
-                <div class="nutrition-item">
-                    <div class="nutrition-value">${recipe.proteins}г</div>
-                    <div class="nutrition-label">белки</div>
-                </div>
-                <div class="nutrition-item">
-                    <div class="nutrition-value">${recipe.fats}г</div>
-                    <div class="nutrition-label">жиры</div>
-                </div>
-                <div class="nutrition-item">
-                    <div class="nutrition-value">${recipe.carbs}г</div>
-                    <div class="nutrition-label">углеводы</div>
+                <div class="nutrition-gram-control">
+                    <label for="gram-input">Граммовка:</label>
+                    <div class="gram-input-group">
+                        <button onclick="changeGrams(-10)">−10</button>
+                        <input type="number" id="gram-input" value="100" min="1" step="1" onchange="updateNutrition()">
+                        <button onclick="changeGrams(10)">+10</button>
+                    </div>
+                    <div class="nutrition-summary" id="nutrition-summary">
+                        <strong>${recipe.calories} ккал</strong> | Белки: ${recipe.proteins}г, Жиры: ${recipe.fats}г, Углеводы: ${recipe.carbs}г
+                    </div>
                 </div>
             </div>
         </div>
+        <script>
+            window._currentRecipe = window._currentRecipe || {};
+            window._currentRecipe.originalNutrition = {
+                calories: ${recipe.calories},
+                proteins: ${recipe.proteins},
+                fats: ${recipe.fats},
+                carbs: ${recipe.carbs}
+            };
+            updatePieChart(${recipe.proteins}, ${recipe.fats}, ${recipe.carbs});
+        </script>
         
         <div class="recipe-description">
             ${recipe.description}
@@ -1281,16 +1294,36 @@ function renderRecipeDetail(recipe) {
         
         ${(() => {
             if (recipe.ingredients && recipe.ingredients.length > 0) {
-                const items = recipe.ingredients.map(ing =>
+                // Сохраним исходные ингредиенты (на 1 порцию) в глобальную переменную для пересчёта
+                window._currentRecipe = window._currentRecipe || {};
+                window._currentRecipe.originalIngredients = recipe.ingredients.map(ing => ({
+                    ...ing, quantity: Number(ing.quantity)
+                }));
+                // Начальное отображение
+                const initialPortions = 1;
+                const scaled = window._currentRecipe.originalIngredients.map(ing => ({
+                    ...ing,
+                    quantity: ing.quantity * initialPortions
+                }));
+                const itemsHtml = scaled.map(ing =>
                     `<div class="ingredient-detail-item">
                         <span class="ing-name">${escapeHtml(ing.name)}</span>
-                        <span class="ing-amount">${ing.quantity} ${getUnitLabel(ing.measureUnit)}</span>
+                        <span class="ing-amount">${ing.quantity % 1 === 0 ? ing.quantity : ing.quantity.toFixed(1)} ${getUnitLabel(ing.measureUnit)}</span>
                     </div>`
                 ).join('');
                 return `
                     <div class="recipe-ingredients">
-                        <h3>Ингредиенты</h3>
-                        <div class="ingredients-list">${items}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">Ингредиенты</h3>
+                            <div class="portions-control">
+                                <button class="portions-btn" onclick="changePortions(-1)">−</button>
+                                <input type="number" id="portions-input" value="1" min="1" step="1" 
+                                       onchange="updateIngredientsForPortions()" style="width: 60px; text-align: center;">
+                                <button class="portions-btn" onclick="changePortions(1)">+</button>
+                                <span>порций</span>
+                            </div>
+                        </div>
+                        <div class="ingredients-list">${itemsHtml}</div>
                     </div>
                 `;
             }
@@ -1794,6 +1827,116 @@ function clearImagePreview() {
 //         alert('Не удалось загрузить рецепт для редактирования');
 //     }
 // }
+
+
+
+
+
+// Функции для пересчёта порций и ингредиентов
+window.changePortions = function (delta) {
+    const input = document.getElementById('portions-input');
+    if (!input) return;
+    let current = parseInt(input.value) || 1;
+    current += delta;
+    if (current < 1) current = 1;
+    input.value = current;
+    updateIngredientsForPortions();
+};
+
+window.updateIngredientsForPortions = function () {
+    const input = document.getElementById('portions-input');
+    if (!input) return;
+    let portions = parseInt(input.value) || 1;
+    if (portions < 1) portions = 1;
+    input.value = portions;
+
+    const original = window._currentRecipe && window._currentRecipe.originalIngredients;
+    if (!original) return;
+
+    const container = document.querySelector('.recipe-ingredients .ingredients-list');
+    if (!container) return;
+
+    container.innerHTML = original.map(ing => {
+        const quantity = ing.quantity * portions;
+        return `<div class="ingredient-detail-item">
+            <span class="ing-name">${escapeHtml(ing.name)}</span>
+            <span class="ing-amount">${quantity % 1 === 0 ? quantity : quantity.toFixed(1)} ${getUnitLabel(ing.measureUnit)}</span>
+        </div>`;
+    }).join('');
+};
+
+// Функции для граммовки и диаграммы
+window.changeGrams = function (delta) {
+    const input = document.getElementById('gram-input');
+    if (!input) return;
+    let current = parseInt(input.value) || 100;
+    current += delta;
+    if (current < 1) current = 1;
+    input.value = current;
+    updateNutrition();
+};
+
+window.updateNutrition = function () {
+    const input = document.getElementById('gram-input');
+    if (!input) return;
+    let grams = parseInt(input.value) || 100;
+    if (grams < 1) grams = 1;
+    input.value = grams;
+
+    const orig = window._currentRecipe && window._currentRecipe.originalNutrition;
+    if (!orig) return;
+
+    const factor = grams / 100;
+    const proteins = orig.proteins * factor;
+    const fats = orig.fats * factor;
+    const carbs = orig.carbs * factor;
+    const calories = orig.calories * factor;
+
+    // Обновляем легенду
+    const legendProteins = document.getElementById('legend-proteins');
+    const legendFats = document.getElementById('legend-fats');
+    const legendCarbs = document.getElementById('legend-carbs');
+    if (legendProteins) legendProteins.textContent = (proteins % 1 === 0 ? proteins : proteins.toFixed(1)) + 'г';
+    if (legendFats) legendFats.textContent = (fats % 1 === 0 ? fats : fats.toFixed(1)) + 'г';
+    if (legendCarbs) legendCarbs.textContent = (carbs % 1 === 0 ? carbs : carbs.toFixed(1)) + 'г';
+
+    // Обновляем сводку
+    const summary = document.getElementById('nutrition-summary');
+    if (summary) {
+        const cal = Math.round(calories);
+        const p = proteins % 1 === 0 ? proteins : proteins.toFixed(1);
+        const f = fats % 1 === 0 ? fats : fats.toFixed(1);
+        const c = carbs % 1 === 0 ? carbs : carbs.toFixed(1);
+        summary.innerHTML = `<strong>${cal} ккал</strong> | Белки: ${p}г, Жиры: ${f}г, Углеводы: ${c}г`;
+    }
+
+    // Обновляем круговую диаграмму
+    updatePieChart(proteins, fats, carbs);
+};
+
+window.updatePieChart = function (proteins, fats, carbs) {
+    const pie = document.getElementById('nutrition-pie');
+    if (!pie) return;
+    const total = proteins + fats + carbs;
+    if (total === 0) {
+        pie.style.background = `conic-gradient(#ccc 0% 100%)`;
+        return;
+    }
+    const pPercent = (proteins / total) * 100;
+    const fPercent = (fats / total) * 100;
+    const cPercent = (carbs / total) * 100;
+    pie.style.background = `conic-gradient(
+        #e74c3c 0% ${pPercent}%,
+        #f1c40f ${pPercent}% ${pPercent + fPercent}%,
+        #2ecc71 ${pPercent + fPercent}% 100%
+    )`;
+};
+
+
+
+
+
+
 
 window.openEditRecipeForm = openEditRecipeForm;
 window.openEditRecipe = openEditRecipeForm;

@@ -1234,3 +1234,129 @@ body {
 .ing-amount {
   color: #7a6652;
 }
+
+
+
+
+
+
+
+
+
+
+/* === УПРАВЛЕНИЕ ПОРЦИЯМИ === */
+.portions-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portions-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #b45f2b;
+  background: #fff;
+  border-radius: 50%;
+  font-weight: 600;
+  color: #b45f2b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.portions-btn:hover {
+  background: #b45f2b;
+  color: white;
+}
+
+#portions-input {
+  border: 1px solid #ddd0c4;
+  border-radius: 6px;
+  padding: 4px;
+  font-size: 0.95rem;
+}
+
+/* === ДИАГРАММА И ГРАММОВКА === */
+.nutrition-interactive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  margin-top: 15px;
+}
+
+.nutrition-diagram {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pie-chart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(#e74c3c 0% 33%, #f1c40f 33% 66%, #2ecc71 66% 100%);
+  margin-bottom: 15px;
+}
+
+.nutrition-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.nutrition-gram-control {
+  flex: 1 1 180px;
+}
+
+.gram-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.gram-input-group button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #b45f2b;
+  background: #fff;
+  border-radius: 50%;
+  font-weight: 600;
+  color: #b45f2b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.gram-input-group button:hover {
+  background: #b45f2b;
+  color: white;
+}
+
+.gram-input-group input {
+  width: 80px;
+  text-align: center;
+  border: 1px solid #ddd0c4;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 0.95rem;
+}
+
+.nutrition-summary {
+  font-size: 0.95rem;
+  margin-top: 10px;
+  line-height: 1.5;
+}
